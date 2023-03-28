@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petclinic
+  template:
+    metadata:
+      labels:
+        app: petclinic
+    spec:
+# petclinic podu mysql podunun kalkmasını bekleyecek.
+      initContainers:
+      - name: init-mysql-server
+        image: busybox
+        command: ['sh', '-c', 'until nc -z mysql:3306; do echo waiting for discovery-server; sleep 2; done;']
+      containers:
+      - image: petclinic2
+        name: petclinic
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: petclinic
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: petclinic
+  name: petclinic
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: petclinic
